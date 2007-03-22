@@ -29,17 +29,16 @@ MODCUMUL=CTS_spec.v Cumul.v CumulDec.v CumulInfer.v
 MODLAMBDA=Lambda_Rules.v LambdaSound.v Confluence.v BD.v Beta.v
 MAINFILES=$(MODTERMES) $(MODTYPING) $(MODRULES) $(MODCUMUL) $(MODLAMBDA)
 
-ALLV=$(MYLIBS:.vo=.v) $(MAINFILES) $(FILES:.vo=.v) \
-     Atermes.v Atyping.v Arules.v Acumul.v Alambda.v \
-     Ltermes.v Ltyping.v Lrules.v Lcumul.v Llambda.v \
-     Errors.v MlExtract.v ExtractECC.v ExtractV6.v ExtractV6Beta.v
-
-ALLHTML=$(ALLV:.v=.html)
-
 VERSION=ExtractV6.v
 #VERSION=ExtractV6Beta.v
 #VERSION=ExtractECC.v
 
+ALLV=$(MYLIBS:.vo=.v) $(MAINFILES) $(FILES:.vo=.v) \
+     Atermes.v Atyping.v Arules.v Acumul.v Alambda.v \
+     Ltermes.v Ltyping.v Lrules.v Lcumul.v Llambda.v \
+     Errors.v MlExtract.v $(VERSION)
+
+ALLHTML=$(ALLV:.v=.html)
 
 usage::
 	@echo "targets:"
