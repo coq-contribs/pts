@@ -50,13 +50,12 @@ let rec plus n m =
 
 let rec eq_nat_dec n m =
   match n with
-    | O -> let rec f = function
-             | O -> true
-             | S n1 -> false
-           in f m
+    | O -> (match m with
+              | O -> true
+              | S m0 -> false)
     | S n0 -> (match m with
                  | O -> false
-                 | S n1 -> eq_nat_dec n0 n1)
+                 | S m0 -> eq_nat_dec n0 m0)
 
 (** val lt_eq_lt_dec : nat -> nat -> bool option **)
 
@@ -76,7 +75,7 @@ let rec le_lt_dec n m =
     | O -> true
     | S n0 -> (match m with
                  | O -> false
-                 | S n1 -> le_lt_dec n0 n1)
+                 | S m0 -> le_lt_dec n0 m0)
 
 (** val le_gt_dec : nat -> nat -> bool **)
 
@@ -99,9 +98,7 @@ let rec list_item e n =
 (** val max_nat : nat -> nat -> nat **)
 
 let max_nat n m =
-  match le_gt_dec n m with
-    | true -> m
-    | false -> n
+  if le_gt_dec n m then m else n
 
 type decide = bool
 
@@ -119,10 +116,7 @@ type 'sort term =
 let rec lift_rec n t k =
   match t with
     | Srt s -> Srt s
-    | Ref i -> Ref
-        (match le_gt_dec k i with
-           | true -> plus n i
-           | false -> i)
+    | Ref i -> Ref (if le_gt_dec k i then plus n i else i)
     | Abs (a, m) -> Abs ((lift_rec n a k), (lift_rec n m (S k)))
     | App (u, v) -> App ((lift_rec n u k), (lift_rec n v k))
     | Prod (a, b) -> Prod ((lift_rec n a k), (lift_rec n b (S k)))
@@ -139,10 +133,7 @@ let rec subst_rec ts t k =
     | Srt s -> Srt s
     | Ref i ->
         (match lt_eq_lt_dec k i with
-           | Some s ->
-               (match s with
-                  | true -> Ref (pred i)
-                  | false -> lift k ts)
+           | Some s -> if s then Ref (pred i) else lift k ts
            | None -> Ref i)
     | Abs (a, m) -> Abs ((subst_rec ts a k), (subst_rec ts m (S k)))
     | App (u, v) -> App ((subst_rec ts u k), (subst_rec ts v k))
@@ -180,10 +171,7 @@ type 'sort pTS_sub_spec =
 
 let is_a_sort = function
   | Srt s -> true
-  | Ref n -> false
-  | Abs (t0, t1) -> false
-  | App (t0, t1) -> false
-  | Prod (t0, t1) -> false
+  | _ -> false
 
 type 'sort red_to_sort_dec = 'sort ppal_dec
 
@@ -200,23 +188,23 @@ type 'sort pTS_algos = { pa_lift : (nat -> 'sort term -> 'sort term);
                          pa_le_type_dec : ('sort env -> 'sort term -> 'sort
                                           term -> __ -> __ -> decide) }
 
-(** val pa_lift : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> nat -> 'a1 term -> 'a1
-                  term **)
+(** val pa_lift :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> nat -> 'a1 term -> 'a1 term **)
 
 let pa_lift _ x = x.pa_lift
 
-(** val pa_subst : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 term -> 'a1 term
-                   -> 'a1 term **)
+(** val pa_subst :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 term -> 'a1 term -> 'a1 term **)
 
 let pa_subst _ x = x.pa_subst
 
-(** val pa_infer_axiom : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 -> 'a1
-                         ppal_dec **)
+(** val pa_infer_axiom :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 -> 'a1 ppal_dec **)
 
 let pa_infer_axiom _ x = x.pa_infer_axiom
 
-(** val pa_infer_rule : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 -> 'a1 ->
-                        'a1 **)
+(** val pa_infer_rule :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 -> 'a1 -> 'a1 **)
 
 let pa_infer_rule _ x = x.pa_infer_rule
 
@@ -257,21 +245,21 @@ type 'sort pTS_TC = { ptc_inf_ppal_type : ('sort env -> 'sort term -> __ ->
                       ptc_chk_wft : ('sort env -> 'sort term -> __ -> 'sort
                                     wft_dec) }
 
-(** val fix_chk_wk : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1
-                     env -> __ -> 'a1 infer_ppal_type) -> 'a1 env -> 'a1 term
-                     -> 'a1 term -> 'a1 check_dec **)
+(** val fix_chk_wk :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1 env -> __ -> 'a1
+    infer_ppal_type) -> 'a1 env -> 'a1 term -> 'a1 term -> 'a1 check_dec **)
 
 let fix_chk_wk the_PTS the_algos fix_inference e t t0 =
   match fix_inference t e __ with
     | Inl s ->
-        (match the_algos.pa_le_type_dec e s t0 __ __ with
-           | true -> Chk_ok
-           | false -> Chk_fail (Expected_type (t, s, t0)))
+        if the_algos.pa_le_type_dec e s t0 __ __
+        then Chk_ok
+        else Chk_fail (Expected_type (t, s, t0))
     | Inr s -> Chk_fail s
 
-(** val fix_add_typ : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1
-                      env -> __ -> 'a1 infer_ppal_type) -> 'a1 env -> 'a1
-                      term -> 'a1 decl_dec **)
+(** val fix_add_typ :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1 env -> __ -> 'a1
+    infer_ppal_type) -> 'a1 env -> 'a1 term -> 'a1 decl_dec **)
 
 let fix_add_typ the_PTS the_algos fix_inference e t =
   match fix_inference t e __ with
@@ -281,17 +269,19 @@ let fix_add_typ the_PTS the_algos fix_inference e t =
            | None -> Dcl_fail (Not_a_type (t, s)))
     | Inr s -> Dcl_fail s
 
-(** val infer_ref : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 env -> nat ->
-                    'a1 infer_ppal_type **)
+(** val infer_ref :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 env -> nat -> 'a1
+    infer_ppal_type **)
 
 let infer_ref the_PTS the_algos e n =
   match list_item e n with
     | Some s -> Inl (the_algos.pa_lift (S n) (typ_of_decl s))
     | None -> Inr (Db_error n)
 
-(** val infer_app : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1 env
-                    -> __ -> 'a1 infer_ppal_type) -> 'a1 env -> 'a1 term ->
-                    'a1 term -> 'a1 infer_ppal_type **)
+(** val infer_app :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1 env -> __ -> 'a1
+    infer_ppal_type) -> 'a1 env -> 'a1 term -> 'a1 term -> 'a1
+    infer_ppal_type **)
 
 let infer_app the_PTS the_algos fix_inference e u v =
   match fix_inference u e __ with
@@ -303,21 +293,16 @@ let infer_app the_PTS the_algos fix_inference e u v =
                   | Chk_ok -> Inl (the_algos.pa_subst v rng)
                   | Chk_fail err -> Inr
                       (match err with
-                         | Under (t, t0) -> err
                          | Expected_type (v0, tv, t) -> Apply_err (u, (Prod
                              (dom, rng)), v0, tv)
-                         | Topsort s1 -> err
-                         | Db_error n -> err
-                         | Lambda_topsort (t, s1) -> err
-                         | Not_a_type (t, t0) -> err
-                         | Not_a_fun (t, t0) -> err
-                         | Apply_err (t, t0, t1, t2) -> err))
+                         | _ -> err))
            | None -> Inr (Not_a_fun (u, s)))
     | Inr s -> Inr s
 
-(** val infer_abs : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1 env
-                    -> __ -> 'a1 infer_ppal_type) -> 'a1 env -> 'a1 term ->
-                    'a1 term -> 'a1 infer_ppal_type **)
+(** val infer_abs :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1 env -> __ -> 'a1
+    infer_ppal_type) -> 'a1 env -> 'a1 term -> 'a1 term -> 'a1
+    infer_ppal_type **)
 
 let infer_abs the_PTS the_algos fix_inference e a m =
   match fix_add_typ the_PTS the_algos fix_inference e a with
@@ -329,16 +314,14 @@ let infer_abs the_PTS the_algos fix_inference e a m =
                       (match the_algos.pa_infer_axiom s0 with
                          | Some s1 -> Inl (Prod (a, s))
                          | None -> Inr (Lambda_topsort ((Abs (a, m)), s0)))
-                  | Ref n -> Inl (Prod (a, s))
-                  | Abs (t0, t1) -> Inl (Prod (a, s))
-                  | App (t0, t1) -> Inl (Prod (a, s))
-                  | Prod (t0, t1) -> Inl (Prod (a, s)))
+                  | _ -> Inl (Prod (a, s)))
            | Inr s -> Inr (Under (a, s)))
     | Dcl_fail err -> Inr err
 
-(** val infer_prod : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1
-                     env -> __ -> 'a1 infer_ppal_type) -> 'a1 env -> 'a1 term
-                     -> 'a1 term -> 'a1 infer_ppal_type **)
+(** val infer_prod :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> ('a1 term -> 'a1 env -> __ -> 'a1
+    infer_ppal_type) -> 'a1 env -> 'a1 term -> 'a1 term -> 'a1
+    infer_ppal_type **)
 
 let infer_prod the_PTS the_algos fix_inference e a b =
   match fix_inference a e __ with
@@ -355,8 +338,9 @@ let infer_prod the_PTS the_algos fix_inference e a b =
            | None -> Inr (Not_a_type (a, x)))
     | Inr x -> Inr x
 
-(** val full_ppal_type : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 term -> 'a1
-                         env -> 'a1 infer_ppal_type **)
+(** val full_ppal_type :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 term -> 'a1 env -> 'a1
+    infer_ppal_type **)
 
 let rec full_ppal_type the_PTS the_algos t e =
   match t with
@@ -375,31 +359,32 @@ let rec full_ppal_type the_PTS the_algos t e =
         infer_prod the_PTS the_algos (fun t0 e0 _ ->
           full_ppal_type the_PTS the_algos t0 e0) e a b
 
-(** val tmp_add_typ : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 env -> 'a1
-                      term -> 'a1 decl_dec **)
+(** val tmp_add_typ :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 env -> 'a1 term -> 'a1 decl_dec **)
 
 let tmp_add_typ the_PTS the_algos e t =
   fix_add_typ the_PTS the_algos (fun x x0 _ ->
     full_ppal_type the_PTS the_algos x x0) e t
 
-(** val tmp_check_typ_when_wf : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 env
-                                -> 'a1 term -> 'a1 term -> 'a1 check_dec **)
+(** val tmp_check_typ_when_wf :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 env -> 'a1 term -> 'a1 term ->
+    'a1 check_dec **)
 
 let tmp_check_typ_when_wf the_PTS the_algos e t t0 =
   fix_chk_wk the_PTS the_algos (fun x x0 _ ->
     full_ppal_type the_PTS the_algos x x0) e t t0
 
-(** val full_type_checker : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 pTS_TC **)
+(** val full_type_checker :
+    'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 pTS_TC **)
 
 let full_type_checker the_PTS the_algos =
   { ptc_inf_ppal_type = (fun e t _ -> full_ppal_type the_PTS the_algos t e);
     ptc_chk_typ = (fun e t t0 _ ->
-    match is_a_sort t0 with
-      | true -> tmp_check_typ_when_wf the_PTS the_algos e t t0
-      | false ->
-          (match tmp_add_typ the_PTS the_algos e t0 with
-             | Dcl_ok -> tmp_check_typ_when_wf the_PTS the_algos e t t0
-             | Dcl_fail err -> Chk_fail err)); ptc_add_typ = (fun x x0 _ ->
+    if is_a_sort t0
+    then tmp_check_typ_when_wf the_PTS the_algos e t t0
+    else (match tmp_add_typ the_PTS the_algos e t0 with
+            | Dcl_ok -> tmp_check_typ_when_wf the_PTS the_algos e t t0
+            | Dcl_fail err -> Chk_fail err)); ptc_add_typ = (fun x x0 _ ->
     tmp_add_typ the_PTS the_algos x x0); ptc_add_def = (fun e t t0 _ ->
     match tmp_add_typ the_PTS the_algos e t0 with
       | Dcl_ok ->
@@ -409,70 +394,64 @@ let full_type_checker the_PTS the_algos =
       | Dcl_fail x -> Dcl_fail x); ptc_chk_wk = (fun x x0 x1 _ _ ->
     tmp_check_typ_when_wf the_PTS the_algos x x0 x1); ptc_chk_wft =
     (fun x x0 _ ->
-    match is_a_sort x0 with
-      | true -> Wft_ok
-      | false ->
-          (match tmp_add_typ the_PTS the_algos x x0 with
-             | Dcl_ok -> Wft_ok
-             | Dcl_fail err -> Wft_fail err)) }
+    if is_a_sort x0
+    then Wft_ok
+    else (match tmp_add_typ the_PTS the_algos x x0 with
+            | Dcl_ok -> Wft_ok
+            | Dcl_fail err -> Wft_fail err)) }
 
-(** val cR_WHNF_convert_hn : ('a1 -> 'a1 -> decide) -> 'a1 basic_rule -> ('a1
-                             env -> 'a1 term -> __ -> 'a1 term sig2) -> 'a1
-                             env -> 'a1 term -> 'a1 term -> decide **)
+(** val r_rt_basic_rule : 'a1 basic_rule -> 'a1 basic_rule **)
+
+let r_rt_basic_rule = function
+  | Build_Basic_rule -> Build_Basic_rule
+
+(** val union_basic_rule :
+    'a1 basic_rule -> 'a1 basic_rule -> 'a1 basic_rule **)
+
+let union_basic_rule x x0 =
+  let Build_Basic_rule = x in let Build_Basic_rule = x0 in Build_Basic_rule
+
+(** val canonical_subtyping : 'a1 basic_rule -> 'a1 subtyping_rule **)
+
+let canonical_subtyping x =
+  r_rt_basic_rule x
+
+(** val cR_WHNF_convert_hn :
+    ('a1 -> 'a1 -> decide) -> 'a1 basic_rule -> ('a1 env -> 'a1 term -> __ ->
+    'a1 term sig2) -> 'a1 env -> 'a1 term -> 'a1 term -> decide **)
 
 let cR_WHNF_convert_hn eq_sort_dec the_Rule whnf0 e x y =
   let rec f x0 x1 x2 _ _ =
     match x1 with
-      | Srt x3 ->
-          (match x2 with
-             | Srt s -> eq_sort_dec x3 s
-             | Ref n -> false
-             | Abs (t, t0) -> false
-             | App (t, t0) -> false
-             | Prod (t, t0) -> false)
-      | Ref x3 ->
-          (match x2 with
-             | Srt s -> false
-             | Ref n -> eq_nat_dec x3 n
-             | Abs (t, t0) -> false
-             | App (t, t0) -> false
-             | Prod (t, t0) -> false)
+      | Srt x3 -> (match x2 with
+                     | Srt s -> eq_sort_dec x3 s
+                     | _ -> false)
+      | Ref x3 -> (match x2 with
+                     | Ref n -> eq_nat_dec x3 n
+                     | _ -> false)
       | Abs (a, m) ->
           (match x2 with
-             | Srt s -> false
-             | Ref n -> false
              | Abs (t, t0) ->
-                 (match f x0 (whnf0 x0 a __) (whnf0 x0 t __) __ __ with
-                    | true ->
-                        f (Cons ((Ax t), x0))
-                          (whnf0 (Cons ((Ax t), x0)) m __)
-                          (whnf0 (Cons ((Ax t), x0)) t0 __) __ __
-                    | false -> false)
-             | App (t, t0) -> false
-             | Prod (t, t0) -> false)
+                 if f x0 (whnf0 x0 a __) (whnf0 x0 t __) __ __
+                 then f (Cons ((Ax t), x0)) (whnf0 (Cons ((Ax t), x0)) m __)
+                        (whnf0 (Cons ((Ax t), x0)) t0 __) __ __
+                 else false
+             | _ -> false)
       | App (u0, v0) ->
           (match x2 with
-             | Srt s -> false
-             | Ref n -> false
-             | Abs (t, t0) -> false
              | App (t, t0) ->
-                 (match f x0 (whnf0 x0 u0 __) (whnf0 x0 t __) __ __ with
-                    | true -> f x0 (whnf0 x0 v0 __) (whnf0 x0 t0 __) __ __
-                    | false -> false)
-             | Prod (t, t0) -> false)
+                 if f x0 (whnf0 x0 u0 __) (whnf0 x0 t __) __ __
+                 then f x0 (whnf0 x0 v0 __) (whnf0 x0 t0 __) __ __
+                 else false
+             | _ -> false)
       | Prod (a, b) ->
           (match x2 with
-             | Srt s -> false
-             | Ref n -> false
-             | Abs (t, t0) -> false
-             | App (t, t0) -> false
              | Prod (t, t0) ->
-                 (match f x0 (whnf0 x0 a __) (whnf0 x0 t __) __ __ with
-                    | true ->
-                        f (Cons ((Ax t), x0))
-                          (whnf0 (Cons ((Ax t), x0)) b __)
-                          (whnf0 (Cons ((Ax t), x0)) t0 __) __ __
-                    | false -> false))
+                 if f x0 (whnf0 x0 a __) (whnf0 x0 t __) __ __
+                 then f (Cons ((Ax t), x0)) (whnf0 (Cons ((Ax t), x0)) b __)
+                        (whnf0 (Cons ((Ax t), x0)) t0 __) __ __
+                 else false
+             | _ -> false)
   in f e x y __ __
 
 type 'sort cTS_spec =
@@ -481,8 +460,8 @@ type 'sort cTS_spec =
 
 (** val head_reduct : 'a1 cTS_spec -> 'a1 basic_rule **)
 
-let head_reduct c =
-  c
+let head_reduct cTS_spec0 =
+  cTS_spec0
 
 type 'sort subtype_dec_CTS = { scts_whnf : ('sort env -> 'sort term -> __ ->
                                            'sort term sig2);
@@ -491,13 +470,14 @@ type 'sort subtype_dec_CTS = { scts_whnf : ('sort env -> 'sort term -> __ ->
                                                  decide);
                                scts_rt_univ_dec : ('sort -> 'sort -> decide) }
 
-(** val scts_rt_univ_dec : 'a1 cTS_spec -> 'a1 subtype_dec_CTS -> 'a1 -> 'a1
-                           -> decide **)
+(** val scts_rt_univ_dec :
+    'a1 cTS_spec -> 'a1 subtype_dec_CTS -> 'a1 -> 'a1 -> decide **)
 
 let scts_rt_univ_dec _ x = x.scts_rt_univ_dec
 
-(** val cR_WHNF_inv_cumul_dec : 'a1 cTS_spec -> 'a1 subtype_dec_CTS -> 'a1
-                                env -> 'a1 term -> 'a1 term -> decide **)
+(** val cR_WHNF_inv_cumul_dec :
+    'a1 cTS_spec -> 'a1 subtype_dec_CTS -> 'a1 env -> 'a1 term -> 'a1 term ->
+    decide **)
 
 let cR_WHNF_inv_cumul_dec the_CTS the_scts e x y =
   let whnf0 = fun x0 x1 -> the_scts.scts_whnf x0 x1 __ in
@@ -506,29 +486,23 @@ let cR_WHNF_inv_cumul_dec the_CTS the_scts e x y =
       | Srt x3 ->
           (match x2 with
              | Srt s -> the_scts.scts_rt_univ_dec x3 s
-             | Ref n -> false
-             | Abs (t, t0) -> false
-             | App (t, t0) -> false
-             | Prod (t, t0) -> false)
+             | _ -> false)
       | Ref n -> the_scts.scts_convert_hn x0 (Ref n) x2 __ __
       | Abs (t, t0) -> the_scts.scts_convert_hn x0 (Abs (t, t0)) x2 __ __
       | App (t, t0) -> the_scts.scts_convert_hn x0 (App (t, t0)) x2 __ __
       | Prod (a, b) ->
           (match x2 with
-             | Srt s -> false
-             | Ref n -> false
-             | Abs (t, t0) -> false
-             | App (t, t0) -> false
              | Prod (t, t0) ->
-                 (match f x0 (whnf0 x0 t) (whnf0 x0 a) __ __ with
-                    | true ->
-                        f (Cons ((Ax t), x0)) (whnf0 (Cons ((Ax t), x0)) b)
-                          (whnf0 (Cons ((Ax t), x0)) t0) __ __
-                    | false -> false))
+                 if f x0 (whnf0 x0 t) (whnf0 x0 a) __ __
+                 then f (Cons ((Ax t), x0)) (whnf0 (Cons ((Ax t), x0)) b)
+                        (whnf0 (Cons ((Ax t), x0)) t0) __ __
+                 else false
+             | _ -> false)
   in f e x y __ __
 
-(** val cR_WHNF_cumul_dec : 'a1 cTS_spec -> 'a1 subtype_dec_CTS -> 'a1 env ->
-                            'a1 term -> 'a1 term -> decide **)
+(** val cR_WHNF_cumul_dec :
+    'a1 cTS_spec -> 'a1 subtype_dec_CTS -> 'a1 env -> 'a1 term -> 'a1 term ->
+    decide **)
 
 let cR_WHNF_cumul_dec the_CTS the_scts e x y =
   let whnf0 = fun x0 x1 -> the_scts.scts_whnf x0 x1 __ in
@@ -537,18 +511,19 @@ let cR_WHNF_cumul_dec the_CTS the_scts e x y =
 type 'sort norm_sound_CTS = { ncts_axiom : ('sort -> 'sort ppal_dec);
                               ncts_rule : ('sort -> 'sort -> 'sort sig2) }
 
-(** val ncts_axiom : 'a1 cTS_spec -> 'a1 norm_sound_CTS -> 'a1 -> 'a1
-                     ppal_dec **)
+(** val ncts_axiom :
+    'a1 cTS_spec -> 'a1 norm_sound_CTS -> 'a1 -> 'a1 ppal_dec **)
 
 let ncts_axiom _ x = x.ncts_axiom
 
-(** val ncts_rule : 'a1 cTS_spec -> 'a1 norm_sound_CTS -> 'a1 -> 'a1 -> 'a1
-                    sig2 **)
+(** val ncts_rule :
+    'a1 cTS_spec -> 'a1 norm_sound_CTS -> 'a1 -> 'a1 -> 'a1 sig2 **)
 
 let ncts_rule _ x = x.ncts_rule
 
-(** val cts_prim_algos : 'a1 cTS_spec -> 'a1 subtype_dec_CTS -> 'a1
-                         norm_sound_CTS -> 'a1 pTS_algos **)
+(** val cts_prim_algos :
+    'a1 cTS_spec -> 'a1 subtype_dec_CTS -> 'a1 norm_sound_CTS -> 'a1
+    pTS_algos **)
 
 let cts_prim_algos the_CTS the_scts the_ncts =
   { pa_lift = (fun x x0 -> lift x x0); pa_subst = (fun x x0 -> 
@@ -556,18 +531,12 @@ let cts_prim_algos the_CTS the_scts the_ncts =
     pa_least_sort = (fun x x0 _ ->
     match the_scts.scts_whnf x x0 __ with
       | Srt s -> Some s
-      | Ref n -> None
-      | Abs (t0, t1) -> None
-      | App (t0, t1) -> None
-      | Prod (t0, t1) -> None); pa_infer_rule = (fun x x0 ->
-    the_ncts.ncts_rule x x0); pa_least_prod = (fun x x0 _ ->
+      | _ -> None); pa_infer_rule = (fun x x0 -> the_ncts.ncts_rule x x0);
+    pa_least_prod = (fun x x0 _ ->
     match the_scts.scts_whnf x x0 __ with
-      | Srt s -> None
-      | Ref n -> None
-      | Abs (t0, t1) -> None
-      | App (t0, t1) -> None
-      | Prod (t0, t1) -> Some (Pair (t0, t1))); pa_le_type_dec =
-    (fun e u v _ _ -> cR_WHNF_cumul_dec the_CTS the_scts e u v) }
+      | Prod (t0, t1) -> Some (Pair (t0, t1))
+      | _ -> None); pa_le_type_dec = (fun e u v _ _ ->
+    cR_WHNF_cumul_dec the_CTS the_scts e u v) }
 
 (** val app_list : 'a1 term list -> 'a1 term -> 'a1 term **)
 
@@ -599,9 +568,10 @@ let delta_reduce n e =
 (** val beta_delta_rule : 'a1 basic_rule **)
 
 let beta_delta_rule =
-  Build_Basic_rule
+  union_basic_rule beta_rule delta_rule
 
-(** val bd_whnf_rec : 'a1 env -> 'a1 term -> 'a1 term list -> 'a1 term sig2 **)
+(** val bd_whnf_rec :
+    'a1 env -> 'a1 term -> 'a1 term list -> 'a1 term sig2 **)
 
 let rec bd_whnf_rec x x0 x1 =
   match x0 with
@@ -717,7 +687,7 @@ let v6 =
 (** val v6_pts : srt_v6 pTS_sub_spec **)
 
 let v6_pts =
-  Build_Basic_rule
+  canonical_subtyping Build_Basic_rule
 
 (** val whnf : env_v6 -> trm_v6 -> trm_v6 sig2 **)
 
@@ -745,35 +715,35 @@ let v6_is_norm_sound =
 (** val infer_type : env_v6 -> trm_v6 -> srt_v6 infer_ppal_type **)
 
 let infer_type e t =
-  (full_type_checker Build_Basic_rule
+  (full_type_checker (canonical_subtyping Build_Basic_rule)
     (cts_prim_algos v6 v6_is_subtype_dec v6_is_norm_sound)).ptc_inf_ppal_type
     e t __
 
 (** val check_wf_type : env_v6 -> trm_v6 -> srt_v6 wft_dec **)
 
 let check_wf_type e t =
-  (full_type_checker Build_Basic_rule
+  (full_type_checker (canonical_subtyping Build_Basic_rule)
     (cts_prim_algos v6 v6_is_subtype_dec v6_is_norm_sound)).ptc_chk_wft e t
     __
 
 (** val check_type : env_v6 -> trm_v6 -> trm_v6 -> srt_v6 check_dec **)
 
 let check_type e t t0 =
-  (full_type_checker Build_Basic_rule
+  (full_type_checker (canonical_subtyping Build_Basic_rule)
     (cts_prim_algos v6 v6_is_subtype_dec v6_is_norm_sound)).ptc_chk_typ e t
     t0 __
 
 (** val add_type : env_v6 -> trm_v6 -> srt_v6 decl_dec **)
 
 let add_type e t =
-  (full_type_checker Build_Basic_rule
+  (full_type_checker (canonical_subtyping Build_Basic_rule)
     (cts_prim_algos v6 v6_is_subtype_dec v6_is_norm_sound)).ptc_add_typ e t
     __
 
 (** val add_def : env_v6 -> trm_v6 -> trm_v6 -> srt_v6 decl_dec **)
 
 let add_def e t t0 =
-  (full_type_checker Build_Basic_rule
+  (full_type_checker (canonical_subtyping Build_Basic_rule)
     (cts_prim_algos v6 v6_is_subtype_dec v6_is_norm_sound)).ptc_add_def e t
     t0 __
 

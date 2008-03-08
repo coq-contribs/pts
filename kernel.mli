@@ -184,6 +184,12 @@ val tmp_check_typ_when_wf :
 
 val full_type_checker : 'a1 pTS_sub_spec -> 'a1 pTS_algos -> 'a1 pTS_TC
 
+val r_rt_basic_rule : 'a1 basic_rule -> 'a1 basic_rule
+
+val union_basic_rule : 'a1 basic_rule -> 'a1 basic_rule -> 'a1 basic_rule
+
+val canonical_subtyping : 'a1 basic_rule -> 'a1 subtyping_rule
+
 val cR_WHNF_convert_hn :
   ('a1 -> 'a1 -> decide) -> 'a1 basic_rule -> ('a1 env -> 'a1 term -> __ ->
   'a1 term sig2) -> 'a1 env -> 'a1 term -> 'a1 term -> decide

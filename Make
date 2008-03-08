@@ -1,0 +1,19 @@
+-R . pure_type_systems
+Main.v
+GenericSort.v
+SortECC.v
+SortV6.v
+CoqV6.v
+ECC.v
+CoqV6Beta.v
+ExtractV6.v
+MlExtract.v
+-custom "(cd examples; ./test_def ../eccd)" eccd test
+-custom "$(CAMLLINK) -o eccd kernel.cmo checker.cmo" "kernel.cmo checker.cmo" eccd
+-custom "$(COQ) $(COQFLAGS) -load-vernac-source ExtractV6.v" "ExtractV6.v MlExtract.vo Main.vo" kernel.ml
+-custom "$(CAMLC) -pp $(CAMLP4)o $<" "kernel.ml kernel.cmi" kernel.cmo
+-custom "$(CAMLC) $<" "kernel.mli" "kernel.cmi"
+-custom "$(CAMLC) -pp $(CAMLP4)o $<" "checker.ml" checker.cmo
+
+
+
