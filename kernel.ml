@@ -460,8 +460,8 @@ type 'sort cTS_spec =
 
 (** val head_reduct : 'a1 cTS_spec -> 'a1 basic_rule **)
 
-let head_reduct cTS_spec0 =
-  cTS_spec0
+let head_reduct c =
+  c
 
 type 'sort subtype_dec_CTS = { scts_whnf : ('sort env -> 'sort term -> __ ->
                                            'sort term sig2);

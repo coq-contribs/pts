@@ -75,7 +75,10 @@ VFILES:=Main.v\
   ECC.v\
   CoqV6Beta.v\
   ExtractV6.v\
-  MlExtract.v
+  MlExtract.v\
+  MyList.v\
+  MyRelations.v\
+  General.v
 VOFILES:=$(VFILES:.v=.vo)
 GLOBFILES:=$(VFILES:.v=.glob)
 VIFILES:=$(VFILES:.v=.vi)
@@ -92,6 +95,9 @@ all: Main.vo\
   CoqV6Beta.vo\
   ExtractV6.vo\
   MlExtract.vo\
+  MyList.vo\
+  MyRelations.vo\
+  General.vo\
   test\
   eccd\
   kernel.ml\
@@ -174,13 +180,8 @@ checker.cmo: checker.ml
 %.g.html: %.v %.glob
 	$(COQDOC) -glob-from $*.glob -html -g $< -o $@
 
-%.v.d.raw: %.v
-	$(COQDEP) -slash $(COQLIBS) "$<" > "$@"\
-	  || ( RV=$$?; rm -f "$@"; exit $${RV} )
-
-%.v.d: %.v.d.raw
-	$(HIDE)sed 's/\(.*\)\.vo[[:space:]]*:/\1.vo \1.glob:/' < "$<" > "$@" \
-	  || ( RV=$$?; rm -f "$@"; exit $${RV} )
+%.v.d: %.v
+	$(COQDEP) -glob -slash $(COQLIBS) "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
 
 byte:
 	$(MAKE) all "OPT:=-byte"

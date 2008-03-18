@@ -104,9 +104,9 @@ refine
  (fun s s' : srt_v6 =>
   match s, s' return (decide (univ s s')) with
   | Sprop c, Sprop c' => _
-  | Sprop _, Stype _ => left _
+  | Sprop _, Stype _ => left _ _
   | Stype n, Stype n' => _
-  | _, _ => right _
+  | _, _ => right _ _
   end).
 case (calc_dec c c'); [ left | right ].
 elim e; auto with arith pts.
