@@ -24,8 +24,8 @@
 #########################
 
 OCAMLLIBS:=
-COQLIBS:= -R . pure_type_systems
-COQDOCLIBS:=-R . pure_type_systems
+COQLIBS:= -R . PTS
+COQDOCLIBS:=-R . PTS
 
 ##########################
 #                        #
@@ -86,25 +86,12 @@ GFILES:=$(VFILES:.v=.g)
 HTMLFILES:=$(VFILES:.v=.html)
 GHTMLFILES:=$(VFILES:.v=.g.html)
 
-all: Main.vo\
-  GenericSort.vo\
-  SortECC.vo\
-  SortV6.vo\
-  CoqV6.vo\
-  ECC.vo\
-  CoqV6Beta.vo\
-  ExtractV6.vo\
-  MlExtract.vo\
-  MyList.vo\
-  MyRelations.vo\
-  General.vo\
-  test\
+all: $(VOFILES) test\
   eccd\
   kernel.ml\
   kernel.cmo\
   kernel.cmi\
   checker.cmo
-
 spec: $(VIFILES)
 
 gallina: $(GFILES)
@@ -156,8 +143,6 @@ checker.cmo: checker.ml
 ####################
 
 .PHONY: all opt byte archclean clean install depend html
-
-.SUFFIXES: .v .vo .vi .g .html .tex .g.tex .g.html
 
 %.vo %.glob: %.v
 	$(COQC) -dump-glob $*.glob $(COQDEBUG) $(COQFLAGS) $*

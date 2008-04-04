@@ -1,4 +1,4 @@
--R . pure_type_systems
+-R . PTS
 Main.v
 GenericSort.v
 SortECC.v
