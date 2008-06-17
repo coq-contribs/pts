@@ -35,8 +35,8 @@ let error =
 
 (** val pred : nat -> nat **)
 
-let pred = function
-  | O -> O
+let pred n = match n with
+  | O -> n
   | S u -> u
 
 (** val plus : nat -> nat -> nat **)
