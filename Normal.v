@@ -269,11 +269,11 @@ Section Ordre_de_Sous_typage.
    ord_norm1 (e, rv) sv -> ord_conv (e, u, (e, v)) (su, sv).
 red in |- *; intros.
 apply t_trans with (e, u, sv).
-elim H0 using clos_refl_trans_ind_left; intros; auto with pts.
-apply t_trans with (e, u, (e, P0)); auto 10 with pts.
+elim H0 using clos_refl_trans_ind_left; auto with pts.
+intro P0; intros; apply t_trans with (e, u, (e, P0)); auto 10 with pts.
 
-elim H using clos_refl_trans_ind_left; intros; auto with pts.
-apply t_trans with (e, P0, sv); auto 10 with pts.
+elim H using clos_refl_trans_ind_left; auto with pts.
+intro P0; intros; apply t_trans with (e, P0, sv); auto 10 with pts.
 Qed.
 
 
@@ -287,11 +287,11 @@ Qed.
    ord_norm1 (e, rv) sv -> ord_conv (e, u, (e, v)) (sv, su).
 red in |- *; intros.
 apply t_trans with (e, u, sv).
-elim H0 using clos_refl_trans_ind_left; intros; auto with pts.
-apply t_trans with (e, u, (e, P0)); auto 10 with pts.
+elim H0 using clos_refl_trans_ind_left; auto with pts.
+intro P0; intros; apply t_trans with (e, u, (e, P0)); auto 10 with pts.
 
-elim H using clos_refl_trans_ind_left; intros; auto with pts.
-apply t_trans with (e, P0, sv); auto 10 with pts.
+elim H using clos_refl_trans_ind_left; auto with pts.
+intro P0; intros; apply t_trans with (e, P0, sv); auto 10 with pts.
 Qed.
 
 
