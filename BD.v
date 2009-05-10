@@ -20,7 +20,7 @@ Section BD_Whnf.
     | _ => True
     end.
 
-  Hint Unfold whnf_bd delta_reduce: pts.
+  Hint Unfold whnf_bd: pts.
 
 
   Lemma bd_red_whnf :
