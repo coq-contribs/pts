@@ -17,9 +17,6 @@ type 'a sig0 = 'a
 type 'a sig2 = 'a
   (* singleton inductive, whose constructor was exist2 *)
 
-type ('a, 'p) sigT =
-  | ExistT of 'a * 'p
-
 type 'a exc = 'a option
 
 val value : 'a1 -> 'a1 option
@@ -198,8 +195,6 @@ type 'sort cTS_spec =
   'sort basic_rule
   (* singleton inductive, whose constructor was Build_CTS_spec *)
 
-val head_reduct : 'a1 cTS_spec -> 'a1 basic_rule
-
 type 'sort subtype_dec_CTS = { scts_whnf : ('sort env -> 'sort term -> __ ->
                                            'sort term sig2);
                                scts_convert_hn : ('sort env -> 'sort term ->
@@ -275,8 +270,6 @@ type trm_v6 = srt_v6 term
 type env_v6 = srt_v6 env
 
 val v6 : srt_v6 cTS_spec
-
-val v6_pts : srt_v6 pTS_sub_spec
 
 val whnf : env_v6 -> trm_v6 -> trm_v6 sig2
 
