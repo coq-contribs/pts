@@ -64,7 +64,7 @@ let rec lt_eq_lt_dec n m =
   match n with
     | O -> (match m with
               | O -> Some false
-              | S n0 -> Some true)
+              | S m0 -> Some true)
     | S n0 -> (match m with
                  | O -> None
                  | S m0 -> lt_eq_lt_dec n0 m0)
