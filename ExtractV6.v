@@ -26,6 +26,9 @@ Extraction NoInline
 
  tmp_add_typ tmp_check_typ_when_wf tmp_check_wf_type.
 *)
+
+Set Extraction AccessOpaque.
+
 Extraction
  "kernel" env_v6 check_type infer_type check_wf_type add_type add_def
          sort_of_gen gen_of_sort.
