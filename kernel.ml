@@ -298,13 +298,6 @@ let ptc_add_typ the_PTS p e t =
 let ptc_add_def the_PTS p e t t0 =
   p.ptc_add_def e t t0 __
 
-(** val ptc_chk_wk :
-    'a1 pTS_sub_spec -> 'a1 pTS_TC -> 'a1 env -> 'a1 term -> 'a1 term -> 'a1
-    check_dec **)
-
-let ptc_chk_wk the_PTS p e t t0 =
-  p.ptc_chk_wk e t t0 __ __
-
 (** val ptc_chk_wft :
     'a1 pTS_sub_spec -> 'a1 pTS_TC -> 'a1 env -> 'a1 term -> 'a1 wft_dec **)
 
@@ -509,45 +502,43 @@ let canonical_subtyping x =
     ('a1 -> 'a1 -> decide) -> 'a1 basic_rule -> ('a1 env -> 'a1 term -> __ ->
     'a1 term sig2) -> 'a1 env -> 'a1 term -> 'a1 term -> decide **)
 
-let rec cR_WHNF_convert_hn eq_sort_dec the_Rule whnf0 e x y =
-  match x with
-  | Srt x0 ->
-    (match y with
-     | Srt s -> eq_sort_dec x0 s
-     | _ -> false)
-  | Ref x0 ->
-    (match y with
-     | Ref n -> eq_nat_dec x0 n
-     | _ -> false)
-  | Abs (a, m) ->
-    (match y with
-     | Abs (t, t0) ->
-       if cR_WHNF_convert_hn eq_sort_dec the_Rule whnf0 e (whnf0 e a __)
-            (whnf0 e t __)
-       then cR_WHNF_convert_hn eq_sort_dec the_Rule whnf0 (Cons ((Ax t), e))
-              (whnf0 (Cons ((Ax t), e)) m __)
-              (whnf0 (Cons ((Ax t), e)) t0 __)
-       else false
-     | _ -> false)
-  | App (u0, v0) ->
-    (match y with
-     | App (t, t0) ->
-       if cR_WHNF_convert_hn eq_sort_dec the_Rule whnf0 e (whnf0 e u0 __)
-            (whnf0 e t __)
-       then cR_WHNF_convert_hn eq_sort_dec the_Rule whnf0 e (whnf0 e v0 __)
-              (whnf0 e t0 __)
-       else false
-     | _ -> false)
-  | Prod (a, b) ->
-    (match y with
-     | Prod (t, t0) ->
-       if cR_WHNF_convert_hn eq_sort_dec the_Rule whnf0 e (whnf0 e a __)
-            (whnf0 e t __)
-       then cR_WHNF_convert_hn eq_sort_dec the_Rule whnf0 (Cons ((Ax t), e))
-              (whnf0 (Cons ((Ax t), e)) b __)
-              (whnf0 (Cons ((Ax t), e)) t0 __)
-       else false
-     | _ -> false)
+let cR_WHNF_convert_hn eq_sort_dec the_Rule whnf0 e x y =
+  let rec f x0 x1 x2 =
+    let h = fun y0 y1 y2 -> f y0 y1 y2 in
+    (fun _ _ ->
+    match x1 with
+    | Srt x3 ->
+      (match x2 with
+       | Srt s -> eq_sort_dec x3 s
+       | _ -> false)
+    | Ref x3 ->
+      (match x2 with
+       | Ref n -> eq_nat_dec x3 n
+       | _ -> false)
+    | Abs (a, m) ->
+      (match x2 with
+       | Abs (t, t0) ->
+         if h x0 (whnf0 x0 a __) (whnf0 x0 t __) __ __
+         then h (Cons ((Ax t), x0)) (whnf0 (Cons ((Ax t), x0)) m __)
+                (whnf0 (Cons ((Ax t), x0)) t0 __) __ __
+         else false
+       | _ -> false)
+    | App (u0, v0) ->
+      (match x2 with
+       | App (t, t0) ->
+         if h x0 (whnf0 x0 u0 __) (whnf0 x0 t __) __ __
+         then h x0 (whnf0 x0 v0 __) (whnf0 x0 t0 __) __ __
+         else false
+       | _ -> false)
+    | Prod (a, b) ->
+      (match x2 with
+       | Prod (t, t0) ->
+         if h x0 (whnf0 x0 a __) (whnf0 x0 t __) __ __
+         then h (Cons ((Ax t), x0)) (whnf0 (Cons ((Ax t), x0)) b __)
+                (whnf0 (Cons ((Ax t), x0)) t0 __) __ __
+         else false
+       | _ -> false))
+  in f e x y __ __
 
 type 'sort cTS_spec =
   'sort basic_rule
@@ -594,10 +585,13 @@ let scts_rt_univ_dec _ x = x.scts_rt_univ_dec
     decide **)
 
 let cR_WHNF_inv_cumul_dec the_CTS the_scts e x y =
-  let whnf0 = scts_whnf the_CTS the_scts in
-  let conv_hn_dec = scts_convert_hn the_CTS the_scts in
+  let whnf0 = fun x0 x1 -> scts_whnf the_CTS the_scts x0 x1 in
+  let conv_hn_dec = fun x0 x1 x2 -> scts_convert_hn the_CTS the_scts x0 x1 x2
+  in
   let rt_univ_dec = the_scts.scts_rt_univ_dec in
   let rec f x0 x1 x2 =
+    let h = fun y0 y1 y2 -> f y0 y1 y2 in
+    (fun _ _ ->
     match x1 with
     | Srt x3 ->
       (match x2 with
@@ -607,20 +601,20 @@ let cR_WHNF_inv_cumul_dec the_CTS the_scts e x y =
     | Prod (a, b) ->
       (match x2 with
        | Prod (t, t0) ->
-         if f x0 (whnf0 x0 t) (whnf0 x0 a)
-         then f (Cons ((Ax t), x0)) (whnf0 (Cons ((Ax t), x0)) b)
-                (whnf0 (Cons ((Ax t), x0)) t0)
+         if h x0 (whnf0 x0 t) (whnf0 x0 a) __ __
+         then h (Cons ((Ax t), x0)) (whnf0 (Cons ((Ax t), x0)) b)
+                (whnf0 (Cons ((Ax t), x0)) t0) __ __
          else false
        | _ -> false)
-    | x3 -> conv_hn_dec x0 x3 x2
-  in f e x y
+    | x3 -> conv_hn_dec x0 x3 x2)
+  in f e x y __ __
 
 (** val cR_WHNF_cumul_dec :
     'a1 cTS_spec -> 'a1 subtype_dec_CTS -> 'a1 env -> 'a1 term -> 'a1 term ->
     decide **)
 
 let cR_WHNF_cumul_dec the_CTS the_scts e x y =
-  let whnf0 = scts_whnf the_CTS the_scts in
+  let whnf0 = fun x0 x1 -> scts_whnf the_CTS the_scts x0 x1 in
   cR_WHNF_inv_cumul_dec the_CTS the_scts e (whnf0 e x) (whnf0 e y)
 
 type 'sort norm_sound_CTS = { ncts_axiom : ('sort -> 'sort ppal_dec);
@@ -641,7 +635,7 @@ let ncts_rule _ x = x.ncts_rule
     'a1 term -> 'a1 red_to_sort_dec **)
 
 let cumul_least_sort the_CTS the_scts the_ncts e t =
-  let whnf0 = scts_whnf the_CTS the_scts in
+  let whnf0 = fun x x0 -> scts_whnf the_CTS the_scts x x0 in
   (match whnf0 e t with
    | Srt s -> Some s
    | _ -> None)
@@ -651,7 +645,7 @@ let cumul_least_sort the_CTS the_scts the_ncts e t =
     'a1 term -> 'a1 red_to_wf_prod_dec **)
 
 let cumul_least_prod the_CTS the_scts the_ncts e t =
-  let whnf0 = scts_whnf the_CTS the_scts in
+  let whnf0 = fun x x0 -> scts_whnf the_CTS the_scts x x0 in
   (match whnf0 e t with
    | Prod (t0, t1) -> Some (Pair (t0, t1))
    | _ -> None)
@@ -722,17 +716,18 @@ let beta_delta_rule =
     'a1 env -> 'a1 term -> 'a1 term list -> 'a1 term sig2 **)
 
 let rec bd_whnf_rec x x0 x1 =
-  match x0 with
-  | Ref n ->
-    (match delta_reduce n x with
-     | Some x2 -> bd_whnf_rec x x2 x1
-     | None -> app_list x1 (Ref n))
-  | Abs (t0, t1) ->
-    (match x1 with
-     | Nil -> Abs (t0, t1)
-     | Cons (t2, l) -> bd_whnf_rec x (subst t2 t1) l)
-  | App (t0, t1) -> bd_whnf_rec x t0 (Cons (t1, x1))
-  | x2 -> app_list x1 x2
+  let h = fun y y0 y1 -> bd_whnf_rec y y0 y1 in
+  (match x0 with
+   | Ref n ->
+     (match delta_reduce n x with
+      | Some x2 -> h x x2 x1
+      | None -> app_list x1 (Ref n))
+   | Abs (t0, t1) ->
+     (match x1 with
+      | Nil -> Abs (t0, t1)
+      | Cons (t2, l) -> h x (subst t2 t1) l)
+   | App (t0, t1) -> h x t0 (Cons (t1, x1))
+   | x2 -> app_list x1 x2)
 
 (** val beta_delta_whnf : 'a1 env -> 'a1 term -> 'a1 term sig2 **)
 

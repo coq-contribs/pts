@@ -16,7 +16,7 @@ General.v
 -custom "$(COQ) $(COQFLAGS) -load-vernac-source ExtractV6.v" "ExtractV6.v MlExtract.vo Main.vo" kernel.ml
 -custom "$(CAMLC) $(PP) $<" "kernel.ml kernel.cmi" kernel.cmo
 -custom "$(CAMLC) $<" "kernel.mli" "kernel.cmi"
--custom "$(CAMLC) $(PP) $<" "checker.ml" checker.cmo
+-custom "$(CAMLC) $(PP) $<" "checker.ml kernel.cmo" checker.cmo
 
 
 

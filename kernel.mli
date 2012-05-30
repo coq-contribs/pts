@@ -174,10 +174,6 @@ val ptc_add_def :
   'a1 pTS_sub_spec -> 'a1 pTS_TC -> 'a1 env -> 'a1 term -> 'a1 term -> 'a1
   decl_dec
 
-val ptc_chk_wk :
-  'a1 pTS_sub_spec -> 'a1 pTS_TC -> 'a1 env -> 'a1 term -> 'a1 term -> 'a1
-  check_dec
-
 val ptc_chk_wft :
   'a1 pTS_sub_spec -> 'a1 pTS_TC -> 'a1 env -> 'a1 term -> 'a1 wft_dec
 
