@@ -106,7 +106,7 @@ refine
   | Sprop c, Sprop c' => _
   | Sprop _, Stype _ => left _ _
   | Stype n, Stype n' => _
-  | _, _ => right _ _
+  | Stype n, Sprop c => right _ _
   end).
 case (calc_dec c c'); [ left | right ].
 elim e; auto with arith pts.

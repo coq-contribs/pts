@@ -109,7 +109,8 @@ refine
   match s, s' return (decide (univ s s')) with
   | Sprop c, Sprop c' => _
   | Stype c n, Stype c' n' => _
-  | _, _ => right _ _
+  | Sprop c, Stype c0 n => right _ _
+  | Stype c n, Sprop c0 => right _ _
   end).
 case (calc_dec c c'); [ left | right ].
 elim e; auto with arith pts.
