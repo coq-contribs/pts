@@ -1,6 +1,8 @@
 
 Require Import General.
 
+Unset Standard Proposition Elimination Names.
+
 Section PTS_modulaire.
 
   Variable sort : Set.

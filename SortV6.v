@@ -2,6 +2,8 @@
 Require Import General.
 Require Export Relations.
 
+Unset Standard Proposition Elimination Names.
+
 Section SortsOfV6.
 
   (* Definition des composantes du calcul *)
