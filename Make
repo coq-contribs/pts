@@ -1,4 +1,5 @@
 -R . PTS
+
 Main.v
 GenericSort.v
 SortECC.v
@@ -11,13 +12,11 @@ MlExtract.v
 MyList.v
 MyRelations.v
 General.v
--custom "(cd examples; ./test_def ../eccd)" eccd test
--custom "$(CAMLLINK) -o eccd kernel.cmo checker.cmo" "kernel.cmo checker.cmo" eccd
--custom "$(COQBIN)coqtop $(COQLIBS) $(COQFLAGS) -load-vernac-source ExtractV6.v" "ExtractV6.v MlExtract.vo Main.vo CoqV6.vo" kernel.ml
--custom "true" "kernel.ml" kernel.mli
--custom "$(CAMLC) $(PP) $<" "kernel.ml kernel.cmi" kernel.cmo
--custom "$(CAMLC) $<" "kernel.mli" "kernel.cmi"
--custom "$(CAMLC) $(PP) $<" "checker.ml kernel.cmi" checker.cmo
 
-
-
+-extra test eccd "(cd examples; ./test_def ../eccd)"
+-extra eccd "kernel.cmo checker.cmo" "$(CAMLLINK) -o eccd kernel.cmo checker.cmo"
+-extra kernel.ml "ExtractV6.v MlExtract.vo Main.vo CoqV6.vo" "$(COQBIN)coqtop $(COQLIBS) $(COQFLAGS) -load-vernac-source ExtractV6.v"
+-extra kernel.mli kernel.ml "true"
+-extra kernel.cmo "kernel.ml kernel.cmi" "$(CAMLC) $(PP) $<"
+-extra kernel.cmi kernel.mli "$(CAMLC) $<"
+-extra checker.cmo "checker.ml kernel.cmi" "$(CAMLC) $(PP) $<"
