@@ -119,7 +119,7 @@ Qed.
 
   Let f1 (a : approx) :=
     match a with
-    | (e, (t, args)) => existS (fun _ => value) (e, app_list args t) (e, t)
+    | (e, (t, args)) => existT (fun _ => value) (e, app_list args t) (e, t)
     end.
 
   Definition whnf_ord (x y : approx) :=
@@ -184,7 +184,7 @@ discriminate.
 
 apply Acc_Acc3.
 unfold whnf_ord in |- *.
-apply (Acc_inverse_image approx (sigS (fun (_:value) => value))).
+apply (Acc_inverse_image approx (sigT (fun (_:value) => value))).
 simpl in |- *.
 apply acc_A_B_lexprod; intros.
 elim H; intros.

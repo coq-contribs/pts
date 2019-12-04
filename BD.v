@@ -181,7 +181,7 @@ Qed.
 
   Let f1 (a : approx) :=
     match a with
-    | (e, (t, args)) => existS (fun _ => value) (e, app_list args t) (e, t)
+    | (e, (t, args)) => existT (fun _ => value) (e, app_list args t) (e, t)
     end.
 
 
