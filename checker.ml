@@ -365,7 +365,7 @@ let parse_cmd ctx = parser
 
 (*> boucle toplevel *)
 let rec skip_til_dot strm =
-  let rec skip_tok = parser
+  let skip_tok = parser
     [< 'Kwd "." >] -> ()
   | [< '_ ; strm >] -> skip_til_dot strm in
   try skip_tok strm

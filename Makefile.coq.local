@@ -1,0 +1,21 @@
+all: test
+
+test: eccd
+	cd examples; ./test_def ../eccd
+
+eccd: kernel.cmo checker.cmo
+	$(CAMLLINK) -o eccd kernel.cmo checker.cmo
+
+kernel.ml: ExtractV6.v MlExtract.vo Main.vo CoqV6.vo
+	$(COQBIN)coqtop -batch $(COQLIBS) $(COQFLAGS) -load-vernac-source ExtractV6.v
+
+kernel.mli: kernel.ml
+
+kernel.cmo: kernel.ml kernel.cmi
+	$(CAMLC) $(PP) $<
+
+kernel.cmi: kernel.mli
+	$(CAMLC) $<
+
+checker.cmo: checker.ml kernel.cmi
+	$(CAMLC) $(CAMLDEBUG) $(CAMLFLAGS) $(CAMLPKGS) -pp 'camlp5o pr_o.cmo -impl' -impl $<
