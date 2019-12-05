@@ -2,8 +2,6 @@
 Require Import General.
 Require Export Relations.
 
-Unset Standard Proposition Elimination Names.
-
 Section SortsOfECC.
 
   Inductive calc : Set :=
